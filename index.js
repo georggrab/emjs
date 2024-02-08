@@ -2,10 +2,16 @@ const canvas = document.getElementById('canvas');
 const btnReset = document.getElementById('btn-reset');
 const ctx = canvas.getContext('2d');
 
+import { drawClusters, drawPoints, drawTouch, clear } from "./draw.js";
+
 window.x = []
 const var_ = 50;
 
 let touch = undefined;
+
+const clusters = [
+    {mu: [0.2, 0.2], cov: [[1.0, 0.0], [0.0, 1.0]], color: 'green'}
+];
 
 btnReset.addEventListener('click', () => {
     window.x = [];
@@ -35,27 +41,6 @@ canvas.addEventListener('mouseup', (e) => {
     localStorage.setItem('x', JSON.stringify(window.x));
 });
 
-const clear = () => {
-    // canvas height / width should match the element height / width
-    canvas.height = canvas.clientHeight;
-    canvas.width = canvas.clientWidth;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-}
-
-const drawPoints = (x) => {
-    for (const point of x) {
-        ctx.beginPath();
-        ctx.arc(point.x * canvas.width, point.y * canvas.height, 5, 0, 2 * Math.PI);
-        ctx.fill();
-    }
-}
-
-const drawTouch = () => {
-    ctx.beginPath();
-    ctx.arc(touch.x, touch.y, 5, 0, 2 * Math.PI);
-    ctx.fill();
-}
-
 const generateNormalDistributedPoint = () => {
     const mu1 = touch.x;
     const mu2 = touch.y;
@@ -67,11 +52,12 @@ const generateNormalDistributedPoint = () => {
 }
 
 const animate = () => {
-    clear();
+    clear(canvas);
     ctx.fillStyle = "green";
-    drawPoints(window.x);
+    drawPoints(ctx, window.x);
+    drawClusters(ctx, clusters);
     if (touch) {
-        drawTouch();
+        drawTouch(ctx, touch);
         if (touch.click) {
             generateNormalDistributedPoint();
         }
