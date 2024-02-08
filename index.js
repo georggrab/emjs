@@ -1,9 +1,16 @@
 const canvas = document.getElementById('canvas');
+const btnReset = document.getElementById('btn-reset');
 const ctx = canvas.getContext('2d');
 
-window.x = nj.random([2, 20]);
+window.x = []
+const var_ = 50;
 
 let touch = undefined;
+
+btnReset.addEventListener('click', () => {
+    window.x = [];
+    localStorage.setItem('x', JSON.stringify(window.x));
+});
 
 canvas.addEventListener('mousedown', (e) => {
     const rect = canvas.getBoundingClientRect();
@@ -25,6 +32,7 @@ canvas.addEventListener('mouseup', (e) => {
     if (touch) {
         touch = {x: touch.x, y: touch.y, click: false};
     }
+    localStorage.setItem('x', JSON.stringify(window.x));
 });
 
 const clear = () => {
@@ -35,9 +43,9 @@ const clear = () => {
 }
 
 const drawPoints = (x) => {
-    for (var i = 0; i < x.shape[1]; i++) {
+    for (const point of x) {
         ctx.beginPath();
-        ctx.arc(x.get(0, i) * canvas.width, x.get(1, i) * canvas.height, 5, 0, 2 * Math.PI);
+        ctx.arc(point.x * canvas.width, point.y * canvas.height, 5, 0, 2 * Math.PI);
         ctx.fill();
     }
 }
@@ -49,15 +57,16 @@ const drawTouch = () => {
 }
 
 const generateNormalDistributedPoint = () => {
-    const unif = nj.random([2]);
     const mu1 = touch.x;
     const mu2 = touch.y;
-    const norm = nj.array([jStat.normal.inv(unif.get(0), mu1, 50) / canvas.width, jStat.normal.inv(unif.get(1), mu2, 50) / canvas.height]);
-    window.x = nj.concatenate(window.x, norm.reshape([2, 1]));
+    const norm = { 
+        x: jStat.normal.inv(Math.random(), mu1, var_) / canvas.width, 
+        y: jStat.normal.inv(Math.random(), mu2, var_) / canvas.height 
+    };
+    window.x.push(norm);
 }
 
 const animate = () => {
-    const x = window.x;
     clear();
     ctx.fillStyle = "green";
     drawPoints(window.x);
@@ -73,5 +82,12 @@ const animate = () => {
 
 window.requestAnimationFrame(animate);
 
-var a = nj.array([1, 2, 3]);
-console.log(a.toString());
+if (localStorage.getItem('x')) {
+    console.log('loading from localstorage');
+    try {
+        window.x = JSON.parse(localStorage.getItem('x'));
+    } catch (e) {
+        console.warn('error loading from localstorage', e);
+        window.x = [];
+    }
+}
