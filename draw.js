@@ -1,4 +1,4 @@
-import { normalPdf } from "./probability.js";
+import { Gaussian } from "./probability.js";
 
 export const clear = (canvas) => {
     // canvas height / width should match the element height / width
@@ -23,4 +23,19 @@ export const drawTouch = (ctx, touch) => {
 }
 
 export const drawClusters = (ctx, clusters) => {
+    ctx.globalCompositeOperation = 'lighter';
+    const step = 0.01;
+    for (let x_ = 0.0; x_ <= 1.0; x_ += step) {
+        for (let y_ = 0.0; y_ <= 1.0; y_ += step) {
+            for (const cluster of clusters) {
+                const g = new Gaussian({mu: cluster.mu, sigma: cluster.cov});
+                const p = g.density([x_, y_]);
+                ctx.fillStyle = cluster.color;
+                ctx.globalAlpha = Math.min(p, 1);
+                ctx.fillRect(x_ * canvas.width, y_ * canvas.height, step * canvas.width, step * canvas.height);
+            }
+        }
+    }
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1.;
 }

@@ -10,7 +10,8 @@ const var_ = 50;
 let touch = undefined;
 
 const clusters = [
-    {mu: [0.2, 0.2], cov: [[1.0, 0.0], [0.0, 1.0]], color: 'green'}
+    {mu: [0.3, 0.3], cov: [[0.01, 0], [0, 0.01]], color: 'blue'},
+    {mu: [0.6, 0.6], cov: [[0.01, 0], [0, 0.01]], color: 'green'},
 ];
 
 btnReset.addEventListener('click', () => {
@@ -53,9 +54,10 @@ const generateNormalDistributedPoint = () => {
 
 const animate = () => {
     clear(canvas);
-    ctx.fillStyle = "green";
-    drawPoints(ctx, window.x);
     drawClusters(ctx, clusters);
+    ctx.fillStyle = "green";
+    ctx.globalAlpha = 1.;
+    drawPoints(ctx, window.x);
     if (touch) {
         drawTouch(ctx, touch);
         if (touch.click) {
