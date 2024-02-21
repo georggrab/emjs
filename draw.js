@@ -1,4 +1,9 @@
-import { Gaussian } from "./probability.js";
+import { normalPdf } from "./probability.js";
+
+export const CANVAS_MATH_BOUND_XMIN = 0
+export const CANVAS_MATH_BOUND_XMAX = 100
+export const CANVAS_MATH_BOUND_YMIN = 0
+export const CANVAS_MATH_BOUND_YMAX = 100
 
 export const clear = (canvas) => {
     // canvas height / width should match the element height / width
@@ -10,8 +15,10 @@ export const clear = (canvas) => {
 
 export const drawPoints = (ctx, points) => {
     for (const point of points) {
+        const absX = (point[0] + CANVAS_MATH_BOUND_XMIN) / (CANVAS_MATH_BOUND_XMAX - CANVAS_MATH_BOUND_XMIN)
+        const absY = (point[1] + CANVAS_MATH_BOUND_XMIN) / (CANVAS_MATH_BOUND_XMAX - CANVAS_MATH_BOUND_XMIN)
         ctx.beginPath();
-        ctx.arc(point.x * canvas.width, point.y * canvas.height, 5, 0, 2 * Math.PI);
+        ctx.arc(absX * canvas.width, absY * canvas.height, 5, 0, 2 * Math.PI);
         ctx.fill();
     }
 }
@@ -24,15 +31,23 @@ export const drawTouch = (ctx, touch) => {
 
 export const drawClusters = (ctx, clusters) => {
     ctx.globalCompositeOperation = 'lighter';
-    const step = 0.01;
-    for (let x_ = 0.0; x_ <= 1.0; x_ += step) {
-        for (let y_ = 0.0; y_ <= 1.0; y_ += step) {
+    const step = 1
+    for (let x_ = CANVAS_MATH_BOUND_XMIN; x_ <= CANVAS_MATH_BOUND_XMAX; x_ += step) {
+        for (let y_ = CANVAS_MATH_BOUND_YMIN; y_ <= CANVAS_MATH_BOUND_YMAX; y_ += step) {
             for (const cluster of clusters) {
-                const g = new Gaussian({mu: cluster.mu, sigma: cluster.cov});
-                const p = g.density([x_, y_]);
-                ctx.fillStyle = cluster.color;
-                ctx.globalAlpha = Math.min(p, 1);
-                ctx.fillRect(x_ * canvas.width, y_ * canvas.height, step * canvas.width, step * canvas.height);
+                try {
+                    const p = normalPdf([x_, y_], cluster.mu, cluster.cov)
+                    ctx.fillStyle = cluster.color;
+                    ctx.globalAlpha = Math.min(p, 1);
+
+                    const absX = (x_ + CANVAS_MATH_BOUND_XMIN) / (CANVAS_MATH_BOUND_XMAX - CANVAS_MATH_BOUND_XMIN)
+                    const absY = (y_ + CANVAS_MATH_BOUND_XMIN) / (CANVAS_MATH_BOUND_XMAX - CANVAS_MATH_BOUND_XMIN)
+                    const absStepX = (step + CANVAS_MATH_BOUND_XMIN) / (CANVAS_MATH_BOUND_XMAX - CANVAS_MATH_BOUND_XMIN)
+                    const absStepY = (step + CANVAS_MATH_BOUND_XMIN) / (CANVAS_MATH_BOUND_XMAX - CANVAS_MATH_BOUND_XMIN)
+                    ctx.fillRect(absX * canvas.width, absY * canvas.height, absStepX * canvas.width, absStepY * canvas.height);
+                } catch (e) {
+                    continue; // invalid covariance matrix
+                }
             }
         }
     }
