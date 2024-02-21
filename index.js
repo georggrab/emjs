@@ -4,8 +4,8 @@ const btnEm = document.getElementById('btn-em');
 const ctx = canvas.getContext('2d');
 const divClusterInfo = document.getElementById('cluster-info');
 
-import { drawClusters, drawPoints, drawTouch, clear, CANVAS_MATH_BOUND_XMAX, CANVAS_MATH_BOUND_YMAX, CANVAS_MATH_BOUND_XMIN, CANVAS_MATH_BOUND_YMIN } from "./draw.js";
-import { emStep } from "./probability.js";
+import { drawClusters2, drawPoints, drawTouch, clear, CANVAS_MATH_BOUND_XMAX, CANVAS_MATH_BOUND_YMAX, CANVAS_MATH_BOUND_XMIN, CANVAS_MATH_BOUND_YMIN } from "./draw.js";
+import { emStep, computeClusters } from "./probability.js";
 
 window.x = []
 
@@ -37,6 +37,7 @@ btnEm.addEventListener('click', () => {
 
     }
     window.prior = newPrior;
+    updateClusterDensities();
     updateClusterInfo();
 })
 
@@ -66,6 +67,14 @@ canvas.addEventListener('mouseup', (e) => {
     }
     localStorage.setItem('x', JSON.stringify(window.x));
 });
+
+const updateClusterDensities = () => {
+    const [mg, densities] = computeClusters(window.clusters, {xmin: CANVAS_MATH_BOUND_XMIN, xmax: CANVAS_MATH_BOUND_XMAX, ymin: CANVAS_MATH_BOUND_YMIN, ymax: CANVAS_MATH_BOUND_YMAX}, 1);
+    for (let i = 0; i < clusters.length; i++) {
+        window.clusters[i].densities = densities[i];
+        window.clusters[i].mg = mg;
+    }
+}
 
 const generateNormalDistributedPoint = () => {
     const mu1 = touch.x;
@@ -101,7 +110,7 @@ const updateClusterInfo = () => {
 
 const animate = () => {
     clear(canvas);
-    drawClusters(ctx, clusters); // Todo draw always, recomute only on E-M step
+    drawClusters2(ctx, clusters, 1); // Todo draw always, recomute only on E-M step
     ctx.fillStyle = "green";
     ctx.globalAlpha = 1.;
     drawPoints(ctx, window.x);
@@ -114,7 +123,7 @@ const animate = () => {
     window.requestAnimationFrame(animate);
 }
 
-
+updateClusterDensities();
 updateClusterInfo();
 window.requestAnimationFrame(animate);
 

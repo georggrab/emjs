@@ -36,7 +36,24 @@ export const matrixVectorMul = (A, b) => {
     return res;
 }
 
+// Compute the clusters for the given bounds
+export const computeClusters = (clusters, bounds, stepSize=1) => {
+    const X_meshgrid = [];
+    for (let x_ = bounds.xmin; x_ <= bounds.xmax; x_ += stepSize) {
+        for (let y_ = bounds.ymin; y_ <= bounds.ymax; y_ += stepSize) {
+            X_meshgrid.push([x_, y_]);
+        }
+    }
+    const densities = []
+    for (const cluster of clusters) {
+        const clusterDensityGrid = normalPdfVec(X_meshgrid, cluster.mu, cluster.cov)
+        densities.push(clusterDensityGrid);
+    }
+    return [X_meshgrid, densities];
+}
+
 export const emStep = (X, clusters, prior) => {
+    console.log("Beginning EM-Step", X, clusters, prior)
     const densities = new Array(clusters.length);
     const norm = new Float64Array(X.length).fill(0); // Nx1, P(Cluster)
     for (let i = 0; i < clusters.length; i++) {
@@ -55,9 +72,11 @@ export const emStep = (X, clusters, prior) => {
     const total_mass = new Float64Array(clusters.length)
     const newPrior = new Array(clusters.length);
     for (let i = 0; i < clusters.length; i++) {
-        total_mass[i] = posterior[i].reduce((a,b) => a + b)
+        total_mass[i] = posterior[i].reduce((a,b) => a + b, 0)
         newPrior[i] = total_mass[i] / X.length;
     }
+    console.log("Total Mass per cluster", total_mass)
+    console.log("New cluster priors", newPrior)
     const clusterRet = new Array(clusters.length);
     for (let c = 0; c < clusters.length; c++) {
         const frac = 1 / total_mass[c];
@@ -83,6 +102,7 @@ export const emStep = (X, clusters, prior) => {
         newCov[1][1] = Math.max(newCov[1][1], 0.01);
         
         clusterRet[c] = [newMu, newCov]
+        console.log("New Cluster", c, newMu, newCov)
     }
     return [clusterRet, newPrior]
 }

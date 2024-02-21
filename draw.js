@@ -42,6 +42,31 @@ export const drawTouch = (ctx, touch, variance) => {
     }
 }
 
+export const drawClusters2 = (ctx, clusters, step) => {
+    ctx.globalCompositeOperation = 'lighter';
+    const canvas = ctx.canvas;
+    for (let i = 0; i < clusters[0].mg.length; i++) {
+        let argmax = 0;
+        const arr = clusters.map((c) => c.densities[i]);
+        arr.forEach((p, i) => {
+            if (p > arr[argmax]) {
+                argmax = i;
+            }
+        });
+        const posterior = arr[argmax] / arr.reduce((a, b) => a + b, 0);
+        const [x_, y_] = clusters[argmax].mg[i];
+        ctx.fillStyle = clusters[argmax].color;
+        ctx.globalAlpha = Math.min(posterior, 1);
+        const absX = (x_ + CANVAS_MATH_BOUND_XMIN) / (CANVAS_MATH_BOUND_XMAX - CANVAS_MATH_BOUND_XMIN)
+        const absY = (y_ + CANVAS_MATH_BOUND_YMIN) / (CANVAS_MATH_BOUND_YMAX - CANVAS_MATH_BOUND_YMIN)
+        const absStepX = (step + CANVAS_MATH_BOUND_XMIN) / (CANVAS_MATH_BOUND_XMAX - CANVAS_MATH_BOUND_XMIN)
+        const absStepY = (step + CANVAS_MATH_BOUND_YMIN) / (CANVAS_MATH_BOUND_YMAX - CANVAS_MATH_BOUND_YMIN)
+        ctx.fillRect(absX * canvas.width, absY * canvas.height, absStepX * canvas.width, absStepY * canvas.height);
+    }
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1.;
+}
+
 export const drawClusters = (ctx, clusters) => {
     ctx.globalCompositeOperation = 'lighter';
     const step = 1
