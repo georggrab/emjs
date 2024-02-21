@@ -49,7 +49,7 @@ export const emStep = (X, clusters, prior) => {
     for (let i = 0; i < clusters.length; i++) {
         posterior[i] = new Float64Array(X.length)
         for (let x = 0; x < X.length; x++) {
-            posterior[i][x] = (densities[i][x] * prior[i]) / norm[x]
+            posterior[i][x] = (densities[i][x] * prior[i]) / (norm[x] + 1e-10);
         }
     }
     const total_mass = new Float64Array(clusters.length)
@@ -63,28 +63,30 @@ export const emStep = (X, clusters, prior) => {
         const frac = 1 / total_mass[c];
         const newMu = [0, 0]
         for (let x = 0; x < X.length; x++) {
-            newMu[0] += (1 / total_mass[c]) * posterior[c][x] * X[x][0];
-            newMu[1] += (1 / total_mass[c]) * posterior[c][x] * X[x][1];
+            newMu[0] += frac * posterior[c][x] * X[x][0];
+            newMu[1] += frac * posterior[c][x] * X[x][1];
         }
-        const newCov = [[0, 0], [0, 0]];
-        const XdX = new Array(X.length);
-        const XdY = new Array(X.length);
+        let newCov = [[0, 0], [0, 0]];
+        
+
         for (let x = 0; x < X.length; x++) {
-            XdX[x] = X[x][0] - newMu[0];
-            XdY[x] = X[x][1] - newMu[1];
+            const XdX = X[x][0] - newMu[0];
+            const XdY = X[x][1] - newMu[1];
+            newCov[0][0] += frac * posterior[c][x] * XdX * XdX;
+            newCov[0][1] += frac * posterior[c][x] * XdX * XdY;
+            newCov[1][0] += frac * posterior[c][x] * XdY * XdX;
+            newCov[1][1] += frac * posterior[c][x] * XdY * XdY;
         }
-        for (let i = 0; i < X.length; i++) {
-            //for (let j = 0; j < X.length; j++) {
-                newCov[0][0] += frac * posterior[c][i] * XdX[i] * XdX[i];
-                newCov[0][1] += frac * posterior[c][i] * XdX[i] * XdY[i];
-                newCov[1][0] += frac * posterior[c][i] * XdY[i] * XdX[i]; // UNNECESS.
-                newCov[1][1] += frac * posterior[c][i] * XdY[i] * XdY[i]; 
-            //}
-        }
+
+        // Avoid numerical issues
+        newCov[0][0] = Math.max(newCov[0][0], 0.01);
+        newCov[1][1] = Math.max(newCov[1][1], 0.01);
+        
         clusterRet[c] = [newMu, newCov]
     }
     return [clusterRet, newPrior]
 }
+
 
 window.emStep = emStep;
 

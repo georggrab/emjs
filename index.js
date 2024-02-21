@@ -2,6 +2,7 @@ const canvas = document.getElementById('canvas');
 const btnReset = document.getElementById('btn-reset');
 const btnEm = document.getElementById('btn-em');
 const ctx = canvas.getContext('2d');
+const divClusterInfo = document.getElementById('cluster-info');
 
 import { drawClusters, drawPoints, drawTouch, clear, CANVAS_MATH_BOUND_XMAX, CANVAS_MATH_BOUND_YMAX, CANVAS_MATH_BOUND_XMIN, CANVAS_MATH_BOUND_YMIN } from "./draw.js";
 import { emStep } from "./probability.js";
@@ -36,6 +37,7 @@ btnEm.addEventListener('click', () => {
 
     }
     window.prior = newPrior;
+    updateClusterInfo();
 })
 
 canvas.addEventListener('mouseout', () => {
@@ -75,6 +77,28 @@ const generateNormalDistributedPoint = () => {
     window.x.push(norm);
 }
 
+const getMathJaxVector = (v) => {
+    return `\\begin{bmatrix} ${v.map((i) => i.toFixed(2)).join(' \\\\ ')} \\end{bmatrix}`;
+}
+
+const getMathJaxMatrix = (m) => {
+    return `\\begin{bmatrix} ${m.map((i) => i.map((j) => j.toFixed(2)).join(' & ')).join(' \\\\ ')} \\end{bmatrix}`;
+
+}
+
+const updateClusterInfo = () => {
+    divClusterInfo.innerHTML = '';
+    for (let i = 0; i < clusters.length; i++) {
+        const cluster = clusters[i];
+        const div = document.createElement('div');
+        div.innerHTML = `Cluster ${i}: \\( \\mu_{${i}} = ${getMathJaxVector(cluster.mu)} \\Sigma_{${i}}=${getMathJaxMatrix(cluster.cov)} \\)`;
+        divClusterInfo.appendChild(div);
+    }
+    if (window.MathJax) {
+        MathJax.typeset();
+    }
+}
+
 const animate = () => {
     clear(canvas);
     drawClusters(ctx, clusters); // Todo draw always, recomute only on E-M step
@@ -91,6 +115,7 @@ const animate = () => {
 }
 
 
+updateClusterInfo();
 window.requestAnimationFrame(animate);
 
 if (localStorage.getItem('x')) {
