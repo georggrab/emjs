@@ -1,6 +1,7 @@
 const canvas = document.getElementById('canvas');
 const btnReset = document.getElementById('btn-reset');
 const btnEm = document.getElementById('btn-em');
+const btnResetClusters = document.getElementById('btn-reset-clusters');
 const ctx = canvas.getContext('2d');
 const divClusterInfo = document.getElementById('cluster-info');
 
@@ -8,6 +9,8 @@ import { drawClusterPosteriors, drawTouchLocation, drawPoints, drawTouch, clear,
 import { emStep, computeClusters, directInv } from "./probability.js";
 
 window.x = []
+window.NUM_CLUSTERS = 3;
+window.DEFAULT_COLORS = ['blue', 'green', 'red', 'purple', 'orange', 'yellow', 'pink', 'brown', 'black', 'gray'];
 
 let touch = undefined;
 let touchVariance = {
@@ -27,6 +30,29 @@ window.clusters = clusters;
 btnReset.addEventListener('click', () => {
     window.x = [];
     localStorage.setItem('x', JSON.stringify(window.x));
+});
+
+btnResetClusters.addEventListener('click', () => {
+    const clusters = [];
+    const priors = new Array(window.NUM_CLUSTERS).fill(1/window.NUM_CLUSTERS);
+    for (let i = 0; i < window.NUM_CLUSTERS; i++) {
+        // Pick a random point between CANVAS_MATH_BOUND_XMIN and CANVAS_MATH_BOUND_XMAX
+        const randomPoint = [
+            Math.random() * (CANVAS_MATH_BOUND_XMAX - CANVAS_MATH_BOUND_XMIN) + CANVAS_MATH_BOUND_XMIN,
+            Math.random() * (CANVAS_MATH_BOUND_YMAX - CANVAS_MATH_BOUND_YMIN) + CANVAS_MATH_BOUND_YMIN
+        ];
+        const cluster = {
+            mu: randomPoint,
+            cov: [[10, 0], [0, 10]],
+            color: window.DEFAULT_COLORS[i % window.DEFAULT_COLORS.length],
+            valid: true
+        }
+        clusters.push(cluster);
+    }   
+    window.clusters = clusters;
+    window.prior = priors;
+    updateClusterDensities();
+    updateClusterInfo();
 });
 
 btnEm.addEventListener('click', () => {
@@ -107,7 +133,18 @@ const updateClusterInfo = () => {
     for (let i = 0; i < window.clusters.length; i++) {
         const cluster = window.clusters[i];
         const div = document.createElement('div');
-        div.innerHTML = `Cluster ${i} (valid: ${cluster.valid}): \\( \\mu_{${i}} = ${getMathJaxVector(cluster.mu)} \\Sigma_{${i}}=${getMathJaxMatrix(cluster.cov)} \\)`;
+        // Create box filled with cluster color
+        const colorBox = document.createElement('span');
+        colorBox.style.backgroundColor = cluster.color;
+        colorBox.style.width = '20px';
+        colorBox.style.height = '20px';
+        colorBox.style.display = 'block';
+        colorBox.style.float = 'left';
+        colorBox.style.marginRight = '5px';
+        const mathJaxContent = document.createElement('div');
+        mathJaxContent.innerHTML = `Cluster ${i} (valid: ${cluster.valid}): \\( \\mu_{${i}} = ${getMathJaxVector(cluster.mu)} \\Sigma_{${i}}=${getMathJaxMatrix(cluster.cov)} \\)`;
+        div.appendChild(colorBox);
+        div.appendChild(mathJaxContent);
         divClusterInfo.appendChild(div);
     }
     if (window.MathJax) {
@@ -117,9 +154,7 @@ const updateClusterInfo = () => {
 
 const animate = () => {
     clear(canvas);
-    //drawClusterPosteriors(ctx, clusters, 1); // Todo draw always, recomute only on E-M step
-    ctx.fillStyle = "green";
-    ctx.globalAlpha = 1.;
+    drawClusterPosteriors(ctx, clusters, 1); 
     for (const cluster of window.clusters) {
         if (cluster.valid) {
             drawCluster(ctx, cluster)

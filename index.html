@@ -8,12 +8,33 @@
             height: 700px;
             width: 700px;
         }
+        #btn-panel {
+            margin: 5px 0;
+        }
+        #btn-panel button {
+            /* flat button design */
+            background-color: #f8f9fa;
+            border: 1px solid black;
+            color: #212529;
+            padding: 5px 10px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #btn-panel button:hover {
+            background-color: #e9ecef;
+        }
     </style>
 </head>
 <body>
-    <button id="btn-reset">Reset</button>
-    <button id="btn-em">EM Step</button>
     <canvas id="canvas"></canvas>
+    <div id="btn-panel">
+        <button id="btn-em">EM Step</button>
+        <button id="btn-reset">Reset Points</button>
+        <button id="btn-reset-clusters">Reset Clusters</button>
+    </div>
     <div id="cluster-info"></div>
     <script type="module" src="index.js"></script>
     <script src="//cdn.jsdelivr.net/npm/jstat@latest/dist/jstat.min.js"></script>

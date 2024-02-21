@@ -49,7 +49,7 @@ export const drawCluster = (ctx, cluster) => {
     const [eigValues, eigVectors] = [eig.lambda.x, eig.E.x];
     const angle = Math.acos(numeric.dot(eigVectors[0], [1, 0]));
     ctx.beginPath();
-    ctx.fillStyle = cluster.color;
+    ctx.strokeStyle = cluster.color;
     // Convert from math coordinates to canvas coordinates for drawing
     const absX = (cluster.mu[0] + CANVAS_MATH_BOUND_XMIN) / (CANVAS_MATH_BOUND_XMAX - CANVAS_MATH_BOUND_XMIN)
     const absY = (cluster.mu[1] + CANVAS_MATH_BOUND_YMIN) / (CANVAS_MATH_BOUND_YMAX - CANVAS_MATH_BOUND_YMIN)
@@ -84,38 +84,12 @@ export const drawClusterPosteriors = (ctx, clusters, step) => {
         const posterior = arr[argmax] / arr.reduce((a, b) => a + b, 0);
         const [x_, y_] = clusters[argmax].mg[i];
         ctx.fillStyle = clusters[argmax].color;
-        ctx.globalAlpha = Math.min(posterior, 1);
+        ctx.globalAlpha = Math.min(posterior, 1) / 2;
         const absX = (x_ + CANVAS_MATH_BOUND_XMIN) / (CANVAS_MATH_BOUND_XMAX - CANVAS_MATH_BOUND_XMIN)
         const absY = (y_ + CANVAS_MATH_BOUND_YMIN) / (CANVAS_MATH_BOUND_YMAX - CANVAS_MATH_BOUND_YMIN)
         const absStepX = (step + CANVAS_MATH_BOUND_XMIN) / (CANVAS_MATH_BOUND_XMAX - CANVAS_MATH_BOUND_XMIN)
         const absStepY = (step + CANVAS_MATH_BOUND_YMIN) / (CANVAS_MATH_BOUND_YMAX - CANVAS_MATH_BOUND_YMIN)
         ctx.fillRect(absX * canvas.width, absY * canvas.height, absStepX * canvas.width, absStepY * canvas.height);
-    }
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.globalAlpha = 1.;
-}
-
-export const drawClusters = (ctx, clusters) => {
-    ctx.globalCompositeOperation = 'lighter';
-    const step = 1
-    for (let x_ = CANVAS_MATH_BOUND_XMIN; x_ <= CANVAS_MATH_BOUND_XMAX; x_ += step) {
-        for (let y_ = CANVAS_MATH_BOUND_YMIN; y_ <= CANVAS_MATH_BOUND_YMAX; y_ += step) {
-            for (const cluster of clusters) {
-                try {
-                    const p = normalPdf([x_, y_], cluster.mu, cluster.cov)
-                    ctx.fillStyle = cluster.color;
-                    ctx.globalAlpha = Math.min(p, 1);
-
-                    const absX = (x_ + CANVAS_MATH_BOUND_XMIN) / (CANVAS_MATH_BOUND_XMAX - CANVAS_MATH_BOUND_XMIN)
-                    const absY = (y_ + CANVAS_MATH_BOUND_XMIN) / (CANVAS_MATH_BOUND_XMAX - CANVAS_MATH_BOUND_XMIN)
-                    const absStepX = (step + CANVAS_MATH_BOUND_XMIN) / (CANVAS_MATH_BOUND_XMAX - CANVAS_MATH_BOUND_XMIN)
-                    const absStepY = (step + CANVAS_MATH_BOUND_XMIN) / (CANVAS_MATH_BOUND_XMAX - CANVAS_MATH_BOUND_XMIN)
-                    ctx.fillRect(absX * canvas.width, absY * canvas.height, absStepX * canvas.width, absStepY * canvas.height);
-                } catch (e) {
-                    continue; // invalid covariance matrix
-                }
-            }
-        }
     }
     ctx.globalCompositeOperation = 'source-over';
     ctx.globalAlpha = 1.;
