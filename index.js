@@ -4,7 +4,7 @@ const btnEm = document.getElementById('btn-em');
 const ctx = canvas.getContext('2d');
 const divClusterInfo = document.getElementById('cluster-info');
 
-import { drawClusters2, drawPoints, drawTouch, clear, CANVAS_MATH_BOUND_XMAX, CANVAS_MATH_BOUND_YMAX, CANVAS_MATH_BOUND_XMIN, CANVAS_MATH_BOUND_YMIN } from "./draw.js";
+import { drawClusterPosteriors, drawTouchLocation, drawPoints, drawTouch, clear, CANVAS_MATH_BOUND_XMAX, CANVAS_MATH_BOUND_YMAX, CANVAS_MATH_BOUND_XMIN, CANVAS_MATH_BOUND_YMIN } from "./draw.js";
 import { emStep, computeClusters } from "./probability.js";
 
 window.x = []
@@ -18,7 +18,7 @@ let touchVariance = {
 window.clusters = [
     {mu: [30, 30], cov: [[2, 0], [0, 2]], color: 'blue'},
     {mu: [60, 60], cov: [[6, 0], [0, 6]], color: 'green'},
-    {mu: [30, 60], cov: [[24, 3], [3, 24]], color: 'red'},
+    {mu: [30, 60], cov: [[1, 0], [0, 1]], color: 'red'},
 ];
 window.prior = [1/3, 1/3, 1/3];
 
@@ -110,7 +110,7 @@ const updateClusterInfo = () => {
 
 const animate = () => {
     clear(canvas);
-    drawClusters2(ctx, clusters, 1); // Todo draw always, recomute only on E-M step
+    drawClusterPosteriors(ctx, clusters, 1); // Todo draw always, recomute only on E-M step
     ctx.fillStyle = "green";
     ctx.globalAlpha = 1.;
     drawPoints(ctx, window.x);
@@ -119,6 +119,7 @@ const animate = () => {
         if (touch.click) {
             generateNormalDistributedPoint();
         }
+        drawTouchLocation(ctx, touch);
     }
     window.requestAnimationFrame(animate);
 }

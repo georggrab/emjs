@@ -42,7 +42,16 @@ export const drawTouch = (ctx, touch, variance) => {
     }
 }
 
-export const drawClusters2 = (ctx, clusters, step) => {
+export const drawTouchLocation = (ctx, touch) => {
+    // Given touch object, write touch location to the bottom right
+    ctx.font = "12px Arial";
+    ctx.fillStyle = "black";
+    const x_ = ((touch.x / ctx.canvas.width) + CANVAS_MATH_BOUND_XMIN) * (CANVAS_MATH_BOUND_XMAX - CANVAS_MATH_BOUND_XMIN)
+    const y_ = ((touch.y / ctx.canvas.height) + CANVAS_MATH_BOUND_YMIN) * (CANVAS_MATH_BOUND_YMAX - CANVAS_MATH_BOUND_YMIN)
+    ctx.fillText(`(${x_.toFixed(2)}, ${y_.toFixed(2)})`, 10, canvas.height - 10);
+}
+
+export const drawClusterPosteriors = (ctx, clusters, step) => {
     ctx.globalCompositeOperation = 'lighter';
     const canvas = ctx.canvas;
     for (let i = 0; i < clusters[0].mg.length; i++) {
