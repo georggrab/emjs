@@ -23,10 +23,23 @@ export const drawPoints = (ctx, points) => {
     }
 }
 
-export const drawTouch = (ctx, touch) => {
+export const drawTouch = (ctx, touch, variance) => {
     ctx.beginPath();
     ctx.arc(touch.x, touch.y, 5, 0, 2 * Math.PI);
     ctx.fill();
+    if (variance) {
+        // Draw 95% confidence interval
+        ctx.beginPath();
+        // Lighter stroke
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.6)';
+        ctx.ellipse(touch.x, touch.y, 1 * variance.x, 1 * variance.y, 0, 0, 2 * Math.PI);
+        ctx.stroke();
+        // Darker stroke
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.ellipse(touch.x, touch.y, 2 * variance.x, 2 * variance.y, 0, 0, 2 * Math.PI);
+        ctx.stroke();
+    }
 }
 
 export const drawClusters = (ctx, clusters) => {

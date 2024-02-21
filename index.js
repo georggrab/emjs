@@ -7,9 +7,12 @@ import { drawClusters, drawPoints, drawTouch, clear, CANVAS_MATH_BOUND_XMAX, CAN
 import { emStep } from "./probability.js";
 
 window.x = []
-const var_ = 50;
 
 let touch = undefined;
+let touchVariance = {
+    x: 50,
+    y: 100,
+}
 
 window.clusters = [
     {mu: [30, 30], cov: [[2, 0], [0, 2]], color: 'blue'},
@@ -35,6 +38,11 @@ btnEm.addEventListener('click', () => {
     window.prior = newPrior;
 })
 
+canvas.addEventListener('mouseout', () => {
+    touch = undefined;
+    console.log('mouseout')
+})
+
 canvas.addEventListener('mousedown', (e) => {
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -46,9 +54,8 @@ canvas.addEventListener('mousemove', (e) => {
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    if (touch) {
-        touch = {x, y, click: touch.click};
-    }
+    const click = touch ? touch.click : false;
+    touch = {x, y, click: click};
 });
 
 canvas.addEventListener('mouseup', (e) => {
@@ -62,8 +69,8 @@ const generateNormalDistributedPoint = () => {
     const mu1 = touch.x;
     const mu2 = touch.y;
     const norm = [ 
-        ((jStat.normal.inv(Math.random(), mu1, var_) / canvas.width) + CANVAS_MATH_BOUND_XMIN) * (CANVAS_MATH_BOUND_XMAX - CANVAS_MATH_BOUND_XMIN), 
-        ((jStat.normal.inv(Math.random(), mu2, var_) / canvas.height) + CANVAS_MATH_BOUND_YMIN) * (CANVAS_MATH_BOUND_YMAX - CANVAS_MATH_BOUND_YMIN) 
+        ((jStat.normal.inv(Math.random(), mu1, touchVariance.x) / canvas.width) + CANVAS_MATH_BOUND_XMIN) * (CANVAS_MATH_BOUND_XMAX - CANVAS_MATH_BOUND_XMIN), 
+        ((jStat.normal.inv(Math.random(), mu2, touchVariance.y) / canvas.height) + CANVAS_MATH_BOUND_YMIN) * (CANVAS_MATH_BOUND_YMAX - CANVAS_MATH_BOUND_YMIN) 
     ]
     window.x.push(norm);
 }
@@ -75,7 +82,7 @@ const animate = () => {
     ctx.globalAlpha = 1.;
     drawPoints(ctx, window.x);
     if (touch) {
-        drawTouch(ctx, touch);
+        drawTouch(ctx, touch, touchVariance);
         if (touch.click) {
             generateNormalDistributedPoint();
         }
