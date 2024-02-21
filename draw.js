@@ -42,6 +42,25 @@ export const drawTouch = (ctx, touch, variance) => {
     }
 }
 
+export const drawCluster = (ctx, cluster) => {
+    // Based on mu and cov, draw an ellipse
+    // Eigendecomposition of cov
+    const eig = numeric.eig(cluster.cov);
+    const [eigValues, eigVectors] = [eig.lambda.x, eig.E.x];
+    const angle = Math.acos(numeric.dot(eigVectors[0], [1, 0]));
+    ctx.beginPath();
+    ctx.fillStyle = cluster.color;
+    // Convert from math coordinates to canvas coordinates for drawing
+    const absX = (cluster.mu[0] + CANVAS_MATH_BOUND_XMIN) / (CANVAS_MATH_BOUND_XMAX - CANVAS_MATH_BOUND_XMIN)
+    const absY = (cluster.mu[1] + CANVAS_MATH_BOUND_YMIN) / (CANVAS_MATH_BOUND_YMAX - CANVAS_MATH_BOUND_YMIN)
+    ctx.ellipse(absX * canvas.width, absY * canvas.height, eigValues[0], eigValues[1], angle, 0, 2 * Math.PI);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(absX * canvas.width, absY * canvas.height, eigValues[0] * 2, eigValues[1] * 2, angle, 0, 2 * Math.PI);
+    ctx.stroke();
+
+}
+
 export const drawTouchLocation = (ctx, touch) => {
     // Given touch object, write touch location to the bottom right
     ctx.font = "12px Arial";

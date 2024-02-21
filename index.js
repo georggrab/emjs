@@ -4,8 +4,8 @@ const btnEm = document.getElementById('btn-em');
 const ctx = canvas.getContext('2d');
 const divClusterInfo = document.getElementById('cluster-info');
 
-import { drawClusterPosteriors, drawTouchLocation, drawPoints, drawTouch, clear, CANVAS_MATH_BOUND_XMAX, CANVAS_MATH_BOUND_YMAX, CANVAS_MATH_BOUND_XMIN, CANVAS_MATH_BOUND_YMIN } from "./draw.js";
-import { emStep, computeClusters } from "./probability.js";
+import { drawClusterPosteriors, drawTouchLocation, drawPoints, drawTouch, clear, CANVAS_MATH_BOUND_XMAX, CANVAS_MATH_BOUND_YMAX, CANVAS_MATH_BOUND_XMIN, CANVAS_MATH_BOUND_YMIN, drawCluster } from "./draw.js";
+import { emStep, computeClusters, directInv } from "./probability.js";
 
 window.x = []
 
@@ -16,9 +16,9 @@ let touchVariance = {
 }
 
 window.clusters = [
-    {mu: [30, 30], cov: [[2, 0], [0, 2]], color: 'blue'},
-    {mu: [60, 60], cov: [[6, 0], [0, 6]], color: 'green'},
-    {mu: [30, 60], cov: [[1, 0], [0, 1]], color: 'red'},
+    {mu: [30, 30], cov: [[2, -1], [-1, 2]], color: 'blue', valid: true},
+    {mu: [60, 60], cov: [[6, 0], [0, 6]], color: 'green', valid: true},
+    {mu: [30, 60], cov: [[1, 0], [0, 1]], color: 'red', valid: true},
 ];
 window.prior = [1/3, 1/3, 1/3];
 
@@ -30,11 +30,18 @@ btnReset.addEventListener('click', () => {
 });
 
 btnEm.addEventListener('click', () => {
+    window.prior = window.prior.filter((p, i) => window.clusters[i].valid);
+    window.clusters = window.clusters.filter((c) => c.valid);
     const [newClusters, newPrior] = emStep(window.x, window.clusters, window.prior);
     for (let i = 0; i < window.clusters.length; i++) {
         window.clusters[i].mu = newClusters[i][0]
         window.clusters[i].cov = newClusters[i][1]
 
+        // test if the covariance matrix is valid
+        const [det, inv] = directInv(newClusters[i][1])
+        if (!isFinite(det) || !isFinite(inv[0][0])) {
+            window.clusters[i].valid = false;
+        }
     }
     window.prior = newPrior;
     updateClusterDensities();
@@ -97,10 +104,10 @@ const getMathJaxMatrix = (m) => {
 
 const updateClusterInfo = () => {
     divClusterInfo.innerHTML = '';
-    for (let i = 0; i < clusters.length; i++) {
-        const cluster = clusters[i];
+    for (let i = 0; i < window.clusters.length; i++) {
+        const cluster = window.clusters[i];
         const div = document.createElement('div');
-        div.innerHTML = `Cluster ${i}: \\( \\mu_{${i}} = ${getMathJaxVector(cluster.mu)} \\Sigma_{${i}}=${getMathJaxMatrix(cluster.cov)} \\)`;
+        div.innerHTML = `Cluster ${i} (valid: ${cluster.valid}): \\( \\mu_{${i}} = ${getMathJaxVector(cluster.mu)} \\Sigma_{${i}}=${getMathJaxMatrix(cluster.cov)} \\)`;
         divClusterInfo.appendChild(div);
     }
     if (window.MathJax) {
@@ -110,9 +117,15 @@ const updateClusterInfo = () => {
 
 const animate = () => {
     clear(canvas);
-    drawClusterPosteriors(ctx, clusters, 1); // Todo draw always, recomute only on E-M step
+    //drawClusterPosteriors(ctx, clusters, 1); // Todo draw always, recomute only on E-M step
     ctx.fillStyle = "green";
     ctx.globalAlpha = 1.;
+    for (const cluster of window.clusters) {
+        if (cluster.valid) {
+            drawCluster(ctx, cluster)
+        }
+
+    }
     drawPoints(ctx, window.x);
     if (touch) {
         drawTouch(ctx, touch, touchVariance);
