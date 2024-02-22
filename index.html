@@ -25,6 +25,17 @@
         }
         #btn-panel button:hover {
             background-color: #e9ecef;
+        } 
+        .inp-cov {
+            background-color: #f8f9fa;
+            color: #212529;
+            border: 1px solid black;
+            padding: 5px 10px;;
+            font-size: 16px;
+            display: inline-block;
+        }
+        .inp-cov input {
+            width: 35px;
         }
     </style>
 </head>
@@ -34,6 +45,11 @@
         <button id="btn-em">EM Step</button>
         <button id="btn-reset">Reset Points</button>
         <button id="btn-reset-clusters">Reset Clusters</button>
+        <div class ="inp-cov" title="Or use scrollwheel">
+            Input covariance:
+            <input value="50" type="number" id="inp-cov-x" placeholder="x" />
+            <input value="100" type="number" id="inp-cov-y" placeholder="y" />
+        </div>
     </div>
     <div id="cluster-info"></div>
     <script type="module" src="index.js"></script>

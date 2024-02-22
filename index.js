@@ -4,6 +4,8 @@ const btnEm = document.getElementById('btn-em');
 const btnResetClusters = document.getElementById('btn-reset-clusters');
 const ctx = canvas.getContext('2d');
 const divClusterInfo = document.getElementById('cluster-info');
+const inpCovX = document.getElementById('inp-cov-x');
+const inpCovY = document.getElementById('inp-cov-y');
 
 import { drawClusterPosteriors, drawTouchLocation, drawPoints, drawTouch, clear, CANVAS_MATH_BOUND_XMAX, CANVAS_MATH_BOUND_YMAX, CANVAS_MATH_BOUND_XMIN, CANVAS_MATH_BOUND_YMIN, drawCluster } from "./draw.js";
 import { emStep, computeClusters, directInv } from "./probability.js";
@@ -14,8 +16,8 @@ window.DEFAULT_COLORS = ['blue', 'green', 'red', 'purple', 'orange', 'yellow', '
 
 let touch = undefined;
 let touchVariance = {
-    x: 50,
-    y: 100,
+    x: inpCovX.value,
+    y: inpCovY.value,
 }
 
 window.clusters = [
@@ -26,6 +28,17 @@ window.clusters = [
 window.prior = [1/3, 1/3, 1/3];
 
 window.clusters = clusters;
+
+
+function updateInputVariance() {
+    touchVariance = {
+        x: inpCovX.value,
+        y: inpCovY.value,
+    }
+}
+
+inpCovX.addEventListener('input', () => updateInputVariance());
+inpCovY.addEventListener('input', () => updateInputVariance());
 
 btnReset.addEventListener('click', () => {
     window.x = [];
@@ -72,6 +85,13 @@ btnEm.addEventListener('click', () => {
     window.prior = newPrior;
     updateClusterDensities();
     updateClusterInfo();
+})
+
+canvas.addEventListener('wheel', (e) => {
+    touchVariance.x = Math.max(0.1, parseFloat(touchVariance.x) + e.deltaX / 100);
+    touchVariance.y = Math.max(0.1, parseFloat(touchVariance.y) + e.deltaY / 100);
+    inpCovX.value = touchVariance.x;
+    inpCovY.value = touchVariance.y;
 })
 
 canvas.addEventListener('mouseout', () => {
