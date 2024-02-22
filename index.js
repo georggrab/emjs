@@ -6,6 +6,7 @@ const ctx = canvas.getContext('2d');
 const divClusterInfo = document.getElementById('cluster-info');
 const inpCovX = document.getElementById('inp-cov-x');
 const inpCovY = document.getElementById('inp-cov-y');
+const inpPosterior = document.getElementById('inp-posterior');
 
 import { drawClusterPosteriors, drawTouchLocation, drawPoints, drawTouch, clear, CANVAS_MATH_BOUND_XMAX, CANVAS_MATH_BOUND_YMAX, CANVAS_MATH_BOUND_XMIN, CANVAS_MATH_BOUND_YMIN, drawCluster } from "./draw.js";
 import { emStep, computeClusters, directInv } from "./probability.js";
@@ -19,7 +20,7 @@ let touchVariance = {
     x: inpCovX.value,
     y: inpCovY.value,
 }
-
+window.drawPosterior = inpPosterior.checked;
 window.clusters = [
     {mu: [30, 30], cov: [[2, -1], [-1, 2]], color: 'blue', valid: true},
     {mu: [60, 60], cov: [[6, 0], [0, 6]], color: 'green', valid: true},
@@ -39,6 +40,9 @@ function updateInputVariance() {
 
 inpCovX.addEventListener('input', () => updateInputVariance());
 inpCovY.addEventListener('input', () => updateInputVariance());
+inpPosterior.addEventListener('input', () => {
+    drawPosterior = inpPosterior.checked;
+});
 
 btnReset.addEventListener('click', () => {
     window.x = [];
@@ -90,8 +94,8 @@ btnEm.addEventListener('click', () => {
 canvas.addEventListener('wheel', (e) => {
     touchVariance.x = Math.max(0.1, parseFloat(touchVariance.x) + e.deltaX / 100);
     touchVariance.y = Math.max(0.1, parseFloat(touchVariance.y) + e.deltaY / 100);
-    inpCovX.value = touchVariance.x;
-    inpCovY.value = touchVariance.y;
+    inpCovX.value = touchVariance.x.toFixed(2);
+    inpCovY.value = touchVariance.y.toFixed(2);
 })
 
 canvas.addEventListener('mouseout', () => {
@@ -174,7 +178,9 @@ const updateClusterInfo = () => {
 
 const animate = () => {
     clear(canvas);
-    drawClusterPosteriors(ctx, clusters, 1); 
+    if (window.drawPosterior) {
+        drawClusterPosteriors(ctx, clusters, 1); 
+    }
     for (const cluster of window.clusters) {
         if (cluster.valid) {
             drawCluster(ctx, cluster)

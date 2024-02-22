@@ -14,11 +14,12 @@ export const clear = (canvas) => {
 }
 
 export const drawPoints = (ctx, points) => {
+    ctx.fillStyle = 'black';
     for (const point of points) {
         const absX = (point[0] + CANVAS_MATH_BOUND_XMIN) / (CANVAS_MATH_BOUND_XMAX - CANVAS_MATH_BOUND_XMIN)
         const absY = (point[1] + CANVAS_MATH_BOUND_XMIN) / (CANVAS_MATH_BOUND_XMAX - CANVAS_MATH_BOUND_XMIN)
         ctx.beginPath();
-        ctx.arc(absX * canvas.width, absY * canvas.height, 5, 0, 2 * Math.PI);
+        ctx.arc(absX * canvas.width, absY * canvas.height, 2, 0, 2 * Math.PI);
         ctx.fill();
     }
 }
