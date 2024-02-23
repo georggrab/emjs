@@ -4,19 +4,19 @@
     <title>EM Visualization</title>
     <style type="text/css">
         #canvas {
-            border: 1px solid black;
+            /*border: 1px solid black;*/
             height: 700px;
-            width: 700px;
+            width: 100%;
         }
         #canvas-graph {
-            border: 1px solid black;
+            /*border: 1px solid black;*/
             height: 100px;
             width: 700px;
         }
         #btn-panel {
             margin: 5px 0;
         }
-        #btn-panel button {
+        button {
             /* flat button design */
             background-color: #f8f9fa;
             border: 1px solid black;
@@ -28,7 +28,7 @@
             font-size: 16px;
             cursor: pointer;
         }
-        #btn-panel button:hover {
+        button:hover {
             background-color: #e9ecef;
         } 
         .inp-cov {
@@ -42,29 +42,35 @@
         .inp-cov input {
             width: 55px;
         }
+        #cluster-info {
+        margin-top: 10px;
+        }
+        #cluster-info div {
+            display:inline-block;
+        }
     </style>
 </head>
 <body>
+    <div>
+    <button id="btn-em">EM Step</button>
+    <button id="btn-reset">Reset Points</button>
+    <button id="btn-reset-clusters">Reset Clusters</button>
+    <div class ="inp-cov" title="Or use scrollwheel">
+        Input covariance:
+        <input value="50" type="number" id="inp-cov-x" placeholder="x" />
+        <input value="100" type="number" id="inp-cov-y" placeholder="y" />
+    </div>
+    <div class ="inp-cov">
+        Draw Posterior
+            <input type="checkbox" id="inp-posterior" checked />
+    </div>
+    <div class ="inp-cov">
+        Animate
+            <input type="checkbox" id="inp-animate" />
+    </div>
+    </div>
     <canvas id="canvas"></canvas>
     <canvas id="canvas-graph"></canvas>
-    <div id="btn-panel">
-        <button id="btn-em">EM Step</button>
-        <button id="btn-reset">Reset Points</button>
-        <button id="btn-reset-clusters">Reset Clusters</button>
-        <div class ="inp-cov" title="Or use scrollwheel">
-            Input covariance:
-            <input value="50" type="number" id="inp-cov-x" placeholder="x" />
-            <input value="100" type="number" id="inp-cov-y" placeholder="y" />
-        </div>
-        <div class ="inp-cov">
-            Draw Posterior
-                <input type="checkbox" id="inp-posterior" checked />
-        </div>
-        <div class ="inp-cov">
-            Animate
-                <input type="checkbox" id="inp-animate" />
-        </div>
-    </div>
     <div id="cluster-info"></div>
     <script type="module" src="index.js"></script>
     <script src="//cdn.jsdelivr.net/npm/jstat@latest/dist/jstat.min.js"></script>

@@ -188,7 +188,7 @@ const updateClusterInfo = () => {
         colorBox.style.float = 'left';
         colorBox.style.marginRight = '5px';
         const mathJaxContent = document.createElement('div');
-        mathJaxContent.innerHTML = `Cluster ${i} (valid: ${cluster.valid}): \\( \\mu_{${i}} = ${getMathJaxVector(cluster.mu)} \\Sigma_{${i}}=${getMathJaxMatrix(cluster.cov)} \\)`;
+        mathJaxContent.innerHTML = `\\( \\mu_{${i}} = ${getMathJaxVector(cluster.mu)} \\Sigma_{${i}}=${getMathJaxMatrix(cluster.cov)} \\)`;
         div.appendChild(colorBox);
         div.appendChild(mathJaxContent);
         divClusterInfo.appendChild(div);
