@@ -193,7 +193,7 @@ const updateClusterInfo = () => {
 const animate = () => {
     clear(canvas);
     clear(canvasGraph);
-    drawLogProbGraph(graphCtx, window.logProbCollector.concat([window.logProbDraft]));
+    drawLogProbGraph(graphCtx, [window.logProbDraft].concat(window.logProbCollector));
     if (window.drawPosterior) {
         drawClusterPosteriors(ctx, clusters, 1, window.bounds); 
     }

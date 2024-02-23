@@ -23,7 +23,7 @@ export const drawLogProbGraph = (ctx, logProbLines) => {
     const offsetX = 50.5;
     const offsetY = 20.5;
     const drawLastN = 10;
-    const spacingX = 30;
+    const spacingX = 50;
     const tickSize = 5;
     const yTickLocMax = offsetY;
     const yTickLocMin = canvas.height - 2 * offsetY;
@@ -99,6 +99,7 @@ export const drawLogProbGraph = (ctx, logProbLines) => {
     // Now, draw the actual data
     for (let c = 0; c < logProbLines.length; c++) {
         const logProb = logProbLines[c];
+        ctx.globalAlpha = 1 / (c + 1);
         for (let i = 0; i < drawLastN; i++) {
             const xLoc = offsetX + (i + 1) * spacingX;
             const yValue = logProb[i]
@@ -119,7 +120,11 @@ export const drawLogProbGraph = (ctx, logProbLines) => {
             }
         
         }
+        ctx.globalAlpha = 1;
     }
+    
+    ctx.font = "16px Arial";
+    ctx.fillText("Log Probabilities", canvas.width - 130, 15, 130);
     
 }
 
