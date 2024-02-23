@@ -62,6 +62,7 @@ export const emStep = (X, clusters, prior) => {
             norm[x] += densities[i][x] * prior[i];
         }
     }
+    const logProb = Math.log(norm.reduce((a, b) => a + b, 0));
     const posterior = new Array(clusters.length); // NxC Array, P(Cluster | X)
     for (let i = 0; i < clusters.length; i++) {
         posterior[i] = new Float64Array(X.length)
@@ -104,7 +105,7 @@ export const emStep = (X, clusters, prior) => {
         clusterRet[c] = [newMu, newCov]
         console.log("New Cluster", c, newMu, newCov)
     }
-    return [clusterRet, newPrior]
+    return [clusterRet, newPrior, logProb]
 }
 
 

@@ -3,9 +3,14 @@
 <head>
     <title>EM Visualization</title>
     <style type="text/css">
-        canvas {
+        #canvas {
             border: 1px solid black;
             height: 700px;
+            width: 700px;
+        }
+        #canvas-graph {
+            border: 1px solid black;
+            height: 100px;
             width: 700px;
         }
         #btn-panel {
@@ -41,6 +46,7 @@
 </head>
 <body>
     <canvas id="canvas"></canvas>
+    <canvas id="canvas-graph"></canvas>
     <div id="btn-panel">
         <button id="btn-em">EM Step</button>
         <button id="btn-reset">Reset Points</button>
@@ -52,7 +58,7 @@
         </div>
         <div class ="inp-cov">
             Draw Posterior
-            <input type="checkbox" id="inp-posterior" checked />
+                <input type="checkbox" id="inp-posterior" checked />
     </div>
     <div id="cluster-info"></div>
     <script type="module" src="index.js"></script>

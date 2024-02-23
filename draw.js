@@ -17,18 +17,125 @@ export const drawPoints = (ctx, points, bounds) => {
     }
 }
 
+export const drawLogProbGraph = (ctx, logProbLines) => {
+    const canvas = ctx.canvas;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const offsetX = 50.5;
+    const offsetY = 20.5;
+    const drawLastN = 10;
+    const spacingX = 30;
+    const tickSize = 5;
+    const yTickLocMax = offsetY;
+    const yTickLocMin = canvas.height - 2 * offsetY;
+    
+
+    const maxValue = logProbLines.flat().length > 0 ? Math.max(...logProbLines.flat()): 0;
+    const minValue = logProbLines.flat().length > 0 ? Math.min(...logProbLines.flat()): -1;
+    
+    // Draw xticks
+    let xLoc = offsetX + spacingX;
+    for (let i = 0; i < drawLastN; i++) {
+        ctx.strokeStyle = '#dddddd'
+        ctx.beginPath();
+        ctx.moveTo(xLoc, 0);
+        ctx.lineTo(xLoc, canvas.height);
+        ctx.stroke();
+        ctx.strokeStyle = 'black'
+        ctx.beginPath();
+        ctx.moveTo(xLoc, canvas.height - offsetY - tickSize);
+        ctx.lineTo(xLoc, canvas.height - offsetY + tickSize);
+        ctx.stroke();
+        ctx.font = "12px Arial";
+        ctx.fillText(`${i+1}`, xLoc - 3, canvas.height - offsetY + 17);
+        xLoc += spacingX;
+    }
+    // Draw 2 yticks: minimum and maximum
+    ctx.strokeStyle = '#dddddd'
+    ctx.beginPath();
+    ctx.moveTo(0, yTickLocMax);
+    ctx.lineTo(canvas.width, yTickLocMax);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, yTickLocMin);
+    ctx.lineTo(canvas.width, yTickLocMin);
+    ctx.stroke();
+    ctx.font = "12px Arial";
+    const text = `${maxValue.toFixed(2)}`.padStart(5, ' ');
+    ctx.fillText(text, 10, yTickLocMax + 4);
+    ctx.beginPath();
+    ctx.moveTo(0, yTickLocMin);
+    ctx.lineTo(canvas.width, yTickLocMin);
+    ctx.stroke();
+    ctx.font = "12px Arial";
+    const textMin = `${minValue.toFixed(2)}`.padStart(5, ' ');
+    ctx.fillText(textMin, 10, yTickLocMin + 4);
+
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'black';
+    // Draw coordinate system
+    // Draw x-axis
+    ctx.beginPath();
+    ctx.moveTo(0, canvas.height - offsetY);
+    ctx.lineTo(canvas.width, canvas.height - offsetY);
+    ctx.stroke();
+    // Draw y-axis
+    ctx.beginPath();
+    ctx.moveTo(offsetX, 0);
+    ctx.lineTo(offsetX, canvas.height);
+    ctx.stroke();
+
+
+    // Black y ticks
+    ctx.strokeStyle = 'black'
+    ctx.beginPath();
+    ctx.moveTo(offsetX - tickSize, yTickLocMax)
+    ctx.lineTo(offsetX + tickSize, yTickLocMax)
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(offsetX - tickSize, yTickLocMin)
+    ctx.lineTo(offsetX + tickSize, yTickLocMin)
+    ctx.stroke();
+
+    // Now, draw the actual data
+    for (let c = 0; c < logProbLines.length; c++) {
+        const logProb = logProbLines[c];
+        for (let i = 0; i < drawLastN; i++) {
+            const xLoc = offsetX + (i + 1) * spacingX;
+            const yValue = logProb[i]
+            const yRelative = (yValue - minValue) / (maxValue - minValue);
+            const yLoc = yRelative * (yTickLocMax - yTickLocMin) + yTickLocMin;
+
+            ctx.beginPath();
+            ctx.arc(xLoc, yLoc, 2, 0, 2 * Math.PI);
+            ctx.fill();
+            if (i !== drawLastN - 1) {
+                const nextYValue = logProb[i + 1]
+                const nextYRelative = (nextYValue - minValue) / (maxValue - minValue);
+                const nextYLoc = nextYRelative * (yTickLocMax - yTickLocMin) + yTickLocMin;
+                ctx.beginPath();
+                ctx.moveTo(xLoc, yLoc);
+                ctx.lineTo(xLoc + spacingX, nextYLoc);
+                ctx.stroke();
+            }
+        
+        }
+    }
+    
+}
+
 export const drawTouch = (ctx, touch, variance) => {
     ctx.beginPath();
     ctx.arc(touch.x, touch.y, 5, 0, 2 * Math.PI);
     ctx.fill();
     if (variance) {
-        // Draw 95% confidence interval
+        // Draw 66% confidence interval
         ctx.beginPath();
         // Lighter stroke
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.6)';
         ctx.ellipse(touch.x, touch.y, 1 * variance.x, 1 * variance.y, 0, 0, 2 * Math.PI);
         ctx.stroke();
         // Darker stroke
+        // Draw 95% confidence interval
         ctx.beginPath();
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
         ctx.ellipse(touch.x, touch.y, 2 * variance.x, 2 * variance.y, 0, 0, 2 * Math.PI);

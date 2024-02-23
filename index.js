@@ -1,15 +1,18 @@
+import { drawClusterPosteriors, drawTouchLocation, drawPoints, drawTouch, clear, drawCluster, drawLogProbGraph } from "./draw.js";
+import { emStep, computeClusters, directInv } from "./probability.js";
+
 const canvas = document.getElementById('canvas');
+const canvasGraph = document.getElementById('canvas-graph');
 const btnReset = document.getElementById('btn-reset');
 const btnEm = document.getElementById('btn-em');
 const btnResetClusters = document.getElementById('btn-reset-clusters');
-const ctx = canvas.getContext('2d');
 const divClusterInfo = document.getElementById('cluster-info');
 const inpCovX = document.getElementById('inp-cov-x');
 const inpCovY = document.getElementById('inp-cov-y');
 const inpPosterior = document.getElementById('inp-posterior');
 
-import { drawClusterPosteriors, drawTouchLocation, drawPoints, drawTouch, clear, drawCluster } from "./draw.js";
-import { emStep, computeClusters, directInv } from "./probability.js";
+const graphCtx = canvasGraph.getContext('2d');
+const ctx = canvas.getContext('2d');
 
 window.x = []
 window.NUM_CLUSTERS = 3;
@@ -26,6 +29,8 @@ window.clusters = [
     {mu: [60, 60], cov: [[6, 0], [0, 6]], color: 'green', valid: true},
     {mu: [30, 60], cov: [[1, 0], [0, 1]], color: 'red', valid: true},
 ];
+window.logProbDraft = [];
+window.logProbCollector = [];
 window.prior = [1/3, 1/3, 1/3];
 window.bounds = {
     xmin: 0,
@@ -74,6 +79,8 @@ btnResetClusters.addEventListener('click', () => {
     }   
     window.clusters = clusters;
     window.prior = priors;
+    window.logProbCollector.push(window.logProbDraft);
+    window.logProbDraft = [];
     updateClusterDensities();
     updateClusterInfo();
 });
@@ -81,7 +88,8 @@ btnResetClusters.addEventListener('click', () => {
 btnEm.addEventListener('click', () => {
     window.prior = window.prior.filter((p, i) => window.clusters[i].valid);
     window.clusters = window.clusters.filter((c) => c.valid);
-    const [newClusters, newPrior] = emStep(window.x, window.clusters, window.prior);
+    const [newClusters, newPrior, logProb] = emStep(window.x, window.clusters, window.prior);
+    window.logProbDraft.push(logProb);
     for (let i = 0; i < window.clusters.length; i++) {
         window.clusters[i].mu = newClusters[i][0]
         window.clusters[i].cov = newClusters[i][1]
@@ -184,6 +192,8 @@ const updateClusterInfo = () => {
 
 const animate = () => {
     clear(canvas);
+    clear(canvasGraph);
+    drawLogProbGraph(graphCtx, window.logProbCollector.concat([window.logProbDraft]));
     if (window.drawPosterior) {
         drawClusterPosteriors(ctx, clusters, 1, window.bounds); 
     }
