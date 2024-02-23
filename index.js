@@ -15,33 +15,30 @@ const inpAnimate = document.getElementById('inp-animate');
 const graphCtx = canvasGraph.getContext('2d');
 const ctx = canvas.getContext('2d');
 
-window.x = []
-window.NUM_CLUSTERS = 3;
-window.DEFAULT_COLORS = ['blue', 'green', 'red', 'purple', 'orange', 'yellow', 'pink', 'brown', 'black', 'gray'];
+let x = []
+let NUM_CLUSTERS = 3;
+let DEFAULT_COLORS = ['blue', 'green', 'red', 'purple', 'orange', 'yellow', 'pink', 'brown', 'black', 'gray'];
 let interval = undefined;
 let touch = undefined;
 let touchVariance = {
     x: inpCovX.value,
     y: inpCovY.value,
 }
-window.drawPosterior = inpPosterior.checked;
-window.clusters = [
+let drawPosterior = inpPosterior.checked;
+let clusters = [
     {mu: [30, 30], cov: [[2, -1], [-1, 2]], color: 'blue', valid: true},
     {mu: [60, 60], cov: [[6, 0], [0, 6]], color: 'green', valid: true},
     {mu: [30, 60], cov: [[1, 0], [0, 1]], color: 'red', valid: true},
 ];
-window.logProbDraft = [];
-window.logProbCollector = [];
-window.prior = [1/3, 1/3, 1/3];
-window.bounds = {
+let logProbDraft = [];
+let logProbCollector = [];
+let prior = [1/3, 1/3, 1/3];
+let bounds = {
     xmin: 0,
     xmax: 100,
     ymin: 0,
     ymax: 100
 }
-
-window.clusters = clusters;
-
 
 function updateInputVariance() {
     touchVariance = {
@@ -58,31 +55,31 @@ inpPosterior.addEventListener('input', () => {
 inpAnimate.addEventListener('input', () => updateAnimate());
 
 btnReset.addEventListener('click', () => {
-    window.x = [];
-    localStorage.setItem('x', JSON.stringify(window.x));
+    x = [];
+    localStorage.setItem('x', JSON.stringify(x));
 });
 
 const resetClusters = () => {
-    const clusters = [];
-    const priors = new Array(window.NUM_CLUSTERS).fill(1/window.NUM_CLUSTERS);
-    for (let i = 0; i < window.NUM_CLUSTERS; i++) {
+    const cl = [];
+    const priors = new Array(NUM_CLUSTERS).fill(1/NUM_CLUSTERS);
+    for (let i = 0; i < NUM_CLUSTERS; i++) {
         // Pick a random point between CANVAS_MATH_BOUND_XMIN and CANVAS_MATH_BOUND_XMAX
         const randomPoint = [
-            Math.random() * (window.bounds.xmax - window.bounds.xmin) + window.bounds.xmin,
-            Math.random() * (window.bounds.ymax - window.bounds.ymin) + window.bounds.ymin
+            Math.random() * (bounds.xmax - bounds.xmin) + bounds.xmin,
+            Math.random() * (bounds.ymax - bounds.ymin) + bounds.ymin
         ];
         const cluster = {
             mu: randomPoint,
             cov: [[10, 0], [0, 10]],
-            color: window.DEFAULT_COLORS[i % window.DEFAULT_COLORS.length],
+            color: DEFAULT_COLORS[i % DEFAULT_COLORS.length],
             valid: true
         }
-        clusters.push(cluster);
+        cl.push(cluster);
     }   
-    window.clusters = clusters;
-    window.prior = priors;
-    window.logProbCollector.push(window.logProbDraft);
-    window.logProbDraft = [];
+    clusters = cl;
+    prior = priors;
+    logProbCollector.push(logProbDraft);
+    logProbDraft = [];
     updateClusterDensities();
     updateClusterInfo();
 }
@@ -90,21 +87,21 @@ const resetClusters = () => {
 btnResetClusters.addEventListener('click', resetClusters);
 
 const executeEmStep = () => {
-    window.prior = window.prior.filter((p, i) => window.clusters[i].valid);
-    window.clusters = window.clusters.filter((c) => c.valid);
-    const [newClusters, newPrior, logProb] = emStep(window.x, window.clusters, window.prior);
-    window.logProbDraft.push(logProb);
-    for (let i = 0; i < window.clusters.length; i++) {
-        window.clusters[i].mu = newClusters[i][0]
-        window.clusters[i].cov = newClusters[i][1]
+    prior = prior.filter((p, i) => clusters[i].valid);
+    clusters = clusters.filter((c) => c.valid);
+    const [newClusters, newPrior, logProb] = emStep(x, clusters, prior);
+    logProbDraft.push(logProb);
+    for (let i = 0; i < clusters.length; i++) {
+        clusters[i].mu = newClusters[i][0]
+        clusters[i].cov = newClusters[i][1]
 
         // test if the covariance matrix is valid
         const [det, inv] = directInv(newClusters[i][1])
         if (!isFinite(det) || !isFinite(inv[0][0])) {
-            window.clusters[i].valid = false;
+            clusters[i].valid = false;
         }
     }
-    window.prior = newPrior;
+    prior = newPrior;
     updateClusterDensities();
     updateClusterInfo();
 }
@@ -144,14 +141,14 @@ canvas.addEventListener('mouseup', (e) => {
     if (touch) {
         touch = {x: touch.x, y: touch.y, click: false};
     }
-    localStorage.setItem('x', JSON.stringify(window.x));
+    localStorage.setItem('x', JSON.stringify(x));
 });
 
 const updateClusterDensities = () => {
-    const [mg, densities] = computeClusters(window.clusters, window.bounds, 1);
+    const [mg, densities] = computeClusters(clusters, bounds, 1);
     for (let i = 0; i < clusters.length; i++) {
-        window.clusters[i].densities = densities[i];
-        window.clusters[i].mg = mg;
+        clusters[i].densities = densities[i];
+        clusters[i].mg = mg;
     }
 }
 
@@ -162,7 +159,7 @@ const generateNormalDistributedPoint = (bounds) => {
         ((jStat.normal.inv(Math.random(), mu1, touchVariance.x) / canvas.width) + bounds.xmin) * (bounds.xmax - bounds.xmin),
         ((jStat.normal.inv(Math.random(), mu2, touchVariance.y) / canvas.height) + bounds.ymin) * (bounds.ymax - bounds.ymin)
     ]
-    window.x.push(norm);
+    x.push(norm);
 }
 
 const getMathJaxVector = (v) => {
@@ -176,8 +173,8 @@ const getMathJaxMatrix = (m) => {
 
 const updateClusterInfo = () => {
     divClusterInfo.innerHTML = '';
-    for (let i = 0; i < window.clusters.length; i++) {
-        const cluster = window.clusters[i];
+    for (let i = 0; i < clusters.length; i++) {
+        const cluster = clusters[i];
         const div = document.createElement('div');
         // Create box filled with cluster color
         const colorBox = document.createElement('span');
@@ -208,7 +205,7 @@ const updateAnimate = () => {
 
 const animateHandlerStep = () => {
     // Figure out which state we are in
-    if (window.logProbDraft.length === 0) {
+    if (logProbDraft.length === 0) {
         // Pause for a second
         clearInterval(interval);
         setTimeout(() => {
@@ -217,7 +214,7 @@ const animateHandlerStep = () => {
         }, 1000)
         return
     }
-    if (window.logProbDraft.length < 10) {
+    if (logProbDraft.length < 10) {
         executeEmStep()
     } else {
         // We are done
@@ -232,23 +229,23 @@ const animateHandlerStep = () => {
 const draw = () => {
     clear(canvas);
     clear(canvasGraph);
-    drawLogProbGraph(graphCtx, [window.logProbDraft].concat(window.logProbCollector));
-    if (window.drawPosterior) {
-        drawClusterPosteriors(ctx, clusters, 1, window.bounds); 
+    drawLogProbGraph(graphCtx, [logProbDraft].concat(logProbCollector));
+    if (drawPosterior) {
+        drawClusterPosteriors(ctx, clusters, 1, bounds); 
     }
-    for (const cluster of window.clusters) {
+    for (const cluster of clusters) {
         if (cluster.valid) {
-            drawCluster(ctx, cluster, window.bounds)
+            drawCluster(ctx, cluster, bounds)
         }
 
     }
-    drawPoints(ctx, window.x, window.bounds);
+    drawPoints(ctx, x, bounds);
     if (touch) {
         drawTouch(ctx, touch, touchVariance);
         if (touch.click) {
-            generateNormalDistributedPoint(window.bounds);
+            generateNormalDistributedPoint(bounds);
         }
-        drawTouchLocation(ctx, touch, window.bounds);
+        drawTouchLocation(ctx, touch, bounds);
     }
     window.requestAnimationFrame(draw);
 }
@@ -261,9 +258,9 @@ window.requestAnimationFrame(draw);
 if (localStorage.getItem('x')) {
     console.log('loading from localstorage');
     try {
-        window.x = JSON.parse(localStorage.getItem('x'));
+        x = JSON.parse(localStorage.getItem('x'));
     } catch (e) {
         console.warn('error loading from localstorage', e);
-        window.x = [];
+        x = [];
     }
 }
