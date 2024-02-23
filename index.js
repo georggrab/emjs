@@ -10,6 +10,7 @@ const divClusterInfo = document.getElementById('cluster-info');
 const inpCovX = document.getElementById('inp-cov-x');
 const inpCovY = document.getElementById('inp-cov-y');
 const inpPosterior = document.getElementById('inp-posterior');
+const inpAnimate = document.getElementById('inp-animate');
 
 const graphCtx = canvasGraph.getContext('2d');
 const ctx = canvas.getContext('2d');
@@ -17,7 +18,7 @@ const ctx = canvas.getContext('2d');
 window.x = []
 window.NUM_CLUSTERS = 3;
 window.DEFAULT_COLORS = ['blue', 'green', 'red', 'purple', 'orange', 'yellow', 'pink', 'brown', 'black', 'gray'];
-
+let interval = undefined;
 let touch = undefined;
 let touchVariance = {
     x: inpCovX.value,
@@ -54,13 +55,14 @@ inpCovY.addEventListener('input', () => updateInputVariance());
 inpPosterior.addEventListener('input', () => {
     drawPosterior = inpPosterior.checked;
 });
+inpAnimate.addEventListener('input', () => updateAnimate());
 
 btnReset.addEventListener('click', () => {
     window.x = [];
     localStorage.setItem('x', JSON.stringify(window.x));
 });
 
-btnResetClusters.addEventListener('click', () => {
+const resetClusters = () => {
     const clusters = [];
     const priors = new Array(window.NUM_CLUSTERS).fill(1/window.NUM_CLUSTERS);
     for (let i = 0; i < window.NUM_CLUSTERS; i++) {
@@ -83,9 +85,11 @@ btnResetClusters.addEventListener('click', () => {
     window.logProbDraft = [];
     updateClusterDensities();
     updateClusterInfo();
-});
+}
 
-btnEm.addEventListener('click', () => {
+btnResetClusters.addEventListener('click', resetClusters);
+
+const executeEmStep = () => {
     window.prior = window.prior.filter((p, i) => window.clusters[i].valid);
     window.clusters = window.clusters.filter((c) => c.valid);
     const [newClusters, newPrior, logProb] = emStep(window.x, window.clusters, window.prior);
@@ -103,13 +107,17 @@ btnEm.addEventListener('click', () => {
     window.prior = newPrior;
     updateClusterDensities();
     updateClusterInfo();
-})
+}
+
+btnEm.addEventListener('click', executeEmStep)
 
 canvas.addEventListener('wheel', (e) => {
     touchVariance.x = Math.max(0.1, parseFloat(touchVariance.x) + e.deltaX / 100);
     touchVariance.y = Math.max(0.1, parseFloat(touchVariance.y) + e.deltaY / 100);
     inpCovX.value = touchVariance.x.toFixed(2);
     inpCovY.value = touchVariance.y.toFixed(2);
+    e.stopPropagation();
+    e.preventDefault();
 })
 
 canvas.addEventListener('mouseout', () => {
@@ -190,7 +198,38 @@ const updateClusterInfo = () => {
     }
 }
 
-const animate = () => {
+const updateAnimate = () => {
+    if (inpAnimate.checked) {
+        interval = setInterval(animateHandlerStep, 100)
+    } else {
+        clearInterval(interval);
+    }
+}
+
+const animateHandlerStep = () => {
+    // Figure out which state we are in
+    if (window.logProbDraft.length === 0) {
+        // Pause for a second
+        clearInterval(interval);
+        setTimeout(() => {
+            executeEmStep();
+            updateAnimate();
+        }, 1000)
+        return
+    }
+    if (window.logProbDraft.length < 10) {
+        executeEmStep()
+    } else {
+        // We are done
+        clearInterval(interval);
+        setTimeout(() => {
+            resetClusters();
+            updateAnimate(); 
+        }, 1000);
+    }
+}
+
+const draw = () => {
     clear(canvas);
     clear(canvasGraph);
     drawLogProbGraph(graphCtx, [window.logProbDraft].concat(window.logProbCollector));
@@ -211,12 +250,13 @@ const animate = () => {
         }
         drawTouchLocation(ctx, touch, window.bounds);
     }
-    window.requestAnimationFrame(animate);
+    window.requestAnimationFrame(draw);
 }
 
+resetClusters();
 updateClusterDensities();
 updateClusterInfo();
-window.requestAnimationFrame(animate);
+window.requestAnimationFrame(draw);
 
 if (localStorage.getItem('x')) {
     console.log('loading from localstorage');

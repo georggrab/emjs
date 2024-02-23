@@ -126,6 +126,11 @@ export const drawLogProbGraph = (ctx, logProbLines) => {
     ctx.font = "16px Arial";
     ctx.fillText("Log Probabilities", canvas.width - 130, 15, 130);
     
+    if (logProbLines.length > 0 && logProbLines[0].length > 0) {
+        const currentValue = logProbLines[0][logProbLines[0].length - 1];
+        ctx.fillText(`Current: ${currentValue.toFixed(2)}`, canvas.width - 130, 35, 130);
+    }
+    
 }
 
 export const drawTouch = (ctx, touch, variance) => {
