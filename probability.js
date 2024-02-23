@@ -1,6 +1,6 @@
 
 export const directInv = (cov) => {
-    const d = 1 / (cov[0][0]*cov[1][1] - cov[0][1]*cov[1][0]);
+    const d = 1 / (cov[0][0]*cov[1][1] - cov[0][1]*cov[1][0] + 1e-10);
     return [d, [
         [d * cov[1][1], d * (-cov[0][1])],
         [d * (-cov[1][0]), d * cov[0][0]]
@@ -30,7 +30,7 @@ export const matrixVectorMul = (A, b) => {
     const res = new Array(b.length).fill(0);
     for (let i = 0; i < A.length; i++) {
         for (let j = 0; j < b.length;j++){
-            res[j] += A[i][j] * b[j];
+            res[i] += A[i][j] * b[j];
         }
     }
     return res;
@@ -62,7 +62,11 @@ export const emStep = (X, clusters, prior) => {
             norm[x] += densities[i][x] * prior[i];
         }
     }
+    console.log("Norm densities", norm)
     const logProb = Math.log(norm.reduce((a, b) => a + b, 0));
+    if (!isFinite(logProb)) {
+        debugger;
+    }
     const posterior = new Array(clusters.length); // NxC Array, P(Cluster | X)
     for (let i = 0; i < clusters.length; i++) {
         posterior[i] = new Float64Array(X.length)
@@ -114,7 +118,7 @@ window.emStep = emStep;
 export const normalPdfVec = (X, mu, cov) => {
     const arr = new Float64Array(X.length).fill(0);
     for (let i = 0; i < X.length; i++) {
-        arr[i] = normalPdf(X[i], mu, cov);
+        arr[i] = normalPdfStable(X[i], mu, cov);
     }
     return arr;
 }
@@ -130,8 +134,22 @@ export const normalPdf = (x, mu, cov) => {
     const diff = vectorSub(x, mu);
     const invDiffMul = matrixVectorMul(inv, diff);
     const exponent = vectorDot(diff, invDiffMul);
-    const res = Math.exp(-0.5 * exponent) / Math.sqrt(Math.pow(2 * Math.PI, d) * det);
+    const res = Math.exp(-0.5 * exponent) / (Math.sqrt(Math.pow(2 * Math.PI, d) * det) + 1e-10);
     return res;
+}
+
+export const normalPdfStable = (x, mu, cov) => {
+    // Compute gausian log pdf and then exp it
+    const d = mu.length;
+    const [det, inv] = directInv(cov)
+    if (!isFinite(det) || !isFinite(inv[0][0])) {
+        throw "Invalid Covariance Matrix";
+    }
+    const diff = vectorSub(x, mu);
+    const invDiffMul = matrixVectorMul(inv, diff);
+    const maha = vectorDot(diff, invDiffMul);
+    const logpdf = -0.5 * (d * Math.log(2 * Math.PI) + Math.log(det) + maha);
+    return Math.exp(logpdf);
 }
 
 window.normalPdf = normalPdf;
