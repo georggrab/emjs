@@ -8,7 +8,7 @@ const inpCovX = document.getElementById('inp-cov-x');
 const inpCovY = document.getElementById('inp-cov-y');
 const inpPosterior = document.getElementById('inp-posterior');
 
-import { drawClusterPosteriors, drawTouchLocation, drawPoints, drawTouch, clear, CANVAS_MATH_BOUND_XMAX, CANVAS_MATH_BOUND_YMAX, CANVAS_MATH_BOUND_XMIN, CANVAS_MATH_BOUND_YMIN, drawCluster } from "./draw.js";
+import { drawClusterPosteriors, drawTouchLocation, drawPoints, drawTouch, clear, drawCluster } from "./draw.js";
 import { emStep, computeClusters, directInv } from "./probability.js";
 
 window.x = []
@@ -27,6 +27,12 @@ window.clusters = [
     {mu: [30, 60], cov: [[1, 0], [0, 1]], color: 'red', valid: true},
 ];
 window.prior = [1/3, 1/3, 1/3];
+window.bounds = {
+    xmin: 0,
+    xmax: 100,
+    ymin: 0,
+    ymax: 100
+}
 
 window.clusters = clusters;
 
@@ -55,8 +61,8 @@ btnResetClusters.addEventListener('click', () => {
     for (let i = 0; i < window.NUM_CLUSTERS; i++) {
         // Pick a random point between CANVAS_MATH_BOUND_XMIN and CANVAS_MATH_BOUND_XMAX
         const randomPoint = [
-            Math.random() * (CANVAS_MATH_BOUND_XMAX - CANVAS_MATH_BOUND_XMIN) + CANVAS_MATH_BOUND_XMIN,
-            Math.random() * (CANVAS_MATH_BOUND_YMAX - CANVAS_MATH_BOUND_YMIN) + CANVAS_MATH_BOUND_YMIN
+            Math.random() * (window.bounds.xmax - window.bounds.xmin) + window.bounds.xmin,
+            Math.random() * (window.bounds.ymax - window.bounds.ymin) + window.bounds.ymin
         ];
         const cluster = {
             mu: randomPoint,
@@ -126,19 +132,19 @@ canvas.addEventListener('mouseup', (e) => {
 });
 
 const updateClusterDensities = () => {
-    const [mg, densities] = computeClusters(window.clusters, {xmin: CANVAS_MATH_BOUND_XMIN, xmax: CANVAS_MATH_BOUND_XMAX, ymin: CANVAS_MATH_BOUND_YMIN, ymax: CANVAS_MATH_BOUND_YMAX}, 1);
+    const [mg, densities] = computeClusters(window.clusters, window.bounds, 1);
     for (let i = 0; i < clusters.length; i++) {
         window.clusters[i].densities = densities[i];
         window.clusters[i].mg = mg;
     }
 }
 
-const generateNormalDistributedPoint = () => {
+const generateNormalDistributedPoint = (bounds) => {
     const mu1 = touch.x;
     const mu2 = touch.y;
     const norm = [ 
-        ((jStat.normal.inv(Math.random(), mu1, touchVariance.x) / canvas.width) + CANVAS_MATH_BOUND_XMIN) * (CANVAS_MATH_BOUND_XMAX - CANVAS_MATH_BOUND_XMIN), 
-        ((jStat.normal.inv(Math.random(), mu2, touchVariance.y) / canvas.height) + CANVAS_MATH_BOUND_YMIN) * (CANVAS_MATH_BOUND_YMAX - CANVAS_MATH_BOUND_YMIN) 
+        ((jStat.normal.inv(Math.random(), mu1, touchVariance.x) / canvas.width) + bounds.xmin) * (bounds.xmax - bounds.xmin),
+        ((jStat.normal.inv(Math.random(), mu2, touchVariance.y) / canvas.height) + bounds.ymin) * (bounds.ymax - bounds.ymin)
     ]
     window.x.push(norm);
 }
@@ -179,21 +185,21 @@ const updateClusterInfo = () => {
 const animate = () => {
     clear(canvas);
     if (window.drawPosterior) {
-        drawClusterPosteriors(ctx, clusters, 1); 
+        drawClusterPosteriors(ctx, clusters, 1, window.bounds); 
     }
     for (const cluster of window.clusters) {
         if (cluster.valid) {
-            drawCluster(ctx, cluster)
+            drawCluster(ctx, cluster, window.bounds)
         }
 
     }
-    drawPoints(ctx, window.x);
+    drawPoints(ctx, window.x, window.bounds);
     if (touch) {
         drawTouch(ctx, touch, touchVariance);
         if (touch.click) {
-            generateNormalDistributedPoint();
+            generateNormalDistributedPoint(window.bounds);
         }
-        drawTouchLocation(ctx, touch);
+        drawTouchLocation(ctx, touch, window.bounds);
     }
     window.requestAnimationFrame(animate);
 }

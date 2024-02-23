@@ -1,10 +1,3 @@
-import { normalPdf } from "./probability.js";
-
-export const CANVAS_MATH_BOUND_XMIN = 0
-export const CANVAS_MATH_BOUND_XMAX = 100
-export const CANVAS_MATH_BOUND_YMIN = 0
-export const CANVAS_MATH_BOUND_YMAX = 100
-
 export const clear = (canvas) => {
     // canvas height / width should match the element height / width
     const ctx = canvas.getContext('2d');
@@ -13,11 +6,11 @@ export const clear = (canvas) => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
-export const drawPoints = (ctx, points) => {
+export const drawPoints = (ctx, points, bounds) => {
     ctx.fillStyle = 'black';
     for (const point of points) {
-        const absX = (point[0] + CANVAS_MATH_BOUND_XMIN) / (CANVAS_MATH_BOUND_XMAX - CANVAS_MATH_BOUND_XMIN)
-        const absY = (point[1] + CANVAS_MATH_BOUND_XMIN) / (CANVAS_MATH_BOUND_XMAX - CANVAS_MATH_BOUND_XMIN)
+        const absX = (point[0] + bounds.xmin) / (bounds.xmax - bounds.xmin)
+        const absY = (point[1] + bounds.ymin) / (bounds.ymax - bounds.ymin)
         ctx.beginPath();
         ctx.arc(absX * canvas.width, absY * canvas.height, 2, 0, 2 * Math.PI);
         ctx.fill();
@@ -43,7 +36,7 @@ export const drawTouch = (ctx, touch, variance) => {
     }
 }
 
-export const drawCluster = (ctx, cluster) => {
+export const drawCluster = (ctx, cluster, bounds) => {
     // Based on mu and cov, draw an ellipse
     // Eigendecomposition of cov
     const eig = numeric.eig(cluster.cov);
@@ -52,26 +45,26 @@ export const drawCluster = (ctx, cluster) => {
     ctx.beginPath();
     ctx.strokeStyle = cluster.color;
     // Convert from math coordinates to canvas coordinates for drawing
-    const absX = (cluster.mu[0] + CANVAS_MATH_BOUND_XMIN) / (CANVAS_MATH_BOUND_XMAX - CANVAS_MATH_BOUND_XMIN)
-    const absY = (cluster.mu[1] + CANVAS_MATH_BOUND_YMIN) / (CANVAS_MATH_BOUND_YMAX - CANVAS_MATH_BOUND_YMIN)
-    ctx.ellipse(absX * canvas.width, absY * canvas.height, eigValues[0], eigValues[1], angle, 0, 2 * Math.PI);
+    const absX = (cluster.mu[0] + bounds.xmin) / (bounds.xmax - bounds.xmin)
+    const absY = (cluster.mu[1] + bounds.ymin) / (bounds.ymax - bounds.ymin)
+    ctx.ellipse(absX * canvas.width, absY * canvas.height, Math.max(eigValues[0], 3), Math.max(eigValues[1], 3), angle, 0, 2 * Math.PI);
     ctx.stroke();
     ctx.beginPath();
-    ctx.ellipse(absX * canvas.width, absY * canvas.height, eigValues[0] * 2, eigValues[1] * 2, angle, 0, 2 * Math.PI);
+    ctx.ellipse(absX * canvas.width, absY * canvas.height, Math.max(eigValues[0] * 2, 6), Math.max(eigValues[1] * 2, 6), angle, 0, 2 * Math.PI);
     ctx.stroke();
 
 }
 
-export const drawTouchLocation = (ctx, touch) => {
+export const drawTouchLocation = (ctx, touch, bounds) => {
     // Given touch object, write touch location to the bottom right
     ctx.font = "12px Arial";
     ctx.fillStyle = "black";
-    const x_ = ((touch.x / ctx.canvas.width) + CANVAS_MATH_BOUND_XMIN) * (CANVAS_MATH_BOUND_XMAX - CANVAS_MATH_BOUND_XMIN)
-    const y_ = ((touch.y / ctx.canvas.height) + CANVAS_MATH_BOUND_YMIN) * (CANVAS_MATH_BOUND_YMAX - CANVAS_MATH_BOUND_YMIN)
+    const x_ = ((touch.x / ctx.canvas.width) + bounds.xmin) * (bounds.xmax - bounds.xmin)
+    const y_ = ((touch.y / ctx.canvas.height) + bounds.ymin) * (bounds.ymax - bounds.ymin)
     ctx.fillText(`(${x_.toFixed(2)}, ${y_.toFixed(2)})`, 10, canvas.height - 10);
 }
 
-export const drawClusterPosteriors = (ctx, clusters, step) => {
+export const drawClusterPosteriors = (ctx, clusters, step, bounds) => {
     ctx.globalCompositeOperation = 'lighter';
     const canvas = ctx.canvas;
     for (let i = 0; i < clusters[0].mg.length; i++) {
@@ -86,10 +79,12 @@ export const drawClusterPosteriors = (ctx, clusters, step) => {
         const [x_, y_] = clusters[argmax].mg[i];
         ctx.fillStyle = clusters[argmax].color;
         ctx.globalAlpha = Math.min(posterior, 1) / 2;
-        const absX = (x_ + CANVAS_MATH_BOUND_XMIN) / (CANVAS_MATH_BOUND_XMAX - CANVAS_MATH_BOUND_XMIN)
-        const absY = (y_ + CANVAS_MATH_BOUND_YMIN) / (CANVAS_MATH_BOUND_YMAX - CANVAS_MATH_BOUND_YMIN)
-        const absStepX = (step + CANVAS_MATH_BOUND_XMIN) / (CANVAS_MATH_BOUND_XMAX - CANVAS_MATH_BOUND_XMIN)
-        const absStepY = (step + CANVAS_MATH_BOUND_YMIN) / (CANVAS_MATH_BOUND_YMAX - CANVAS_MATH_BOUND_YMIN)
+        
+        const absX = (x_ + bounds.xmin) / (bounds.xmax - bounds.xmin)
+        const absY = (y_ + bounds.ymin) / (bounds.ymax - bounds.ymin)
+        const absStepX = (step + bounds.xmin) / (bounds.xmax - bounds.xmin)
+        const absStepY = (step + bounds.ymin) / (bounds.ymax - bounds.ymin)
+
         ctx.fillRect(absX * canvas.width, absY * canvas.height, absStepX * canvas.width, absStepY * canvas.height);
     }
     ctx.globalCompositeOperation = 'source-over';
